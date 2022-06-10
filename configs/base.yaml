@@ -1,0 +1,44 @@
+model:
+  type: BaseModel
+  model_args1: null
+  model_args2: null
+  load_from: null
+
+loss: [
+  {type: BaseLoss1, loss_name: loss1, loss_weight: 1.0},
+  {type: BaseLoss2, loss_name: loss2, loss_weight: 1.0},
+]
+
+metric: base_metric
+
+data:
+  type: BaseData
+  fold: 0
+  num_folds: 5
+  batch_size: 32
+  stratified_by: null
+  group_by: null
+  dataset:
+    dataset_args1: null
+    dataset_args2: null
+
+train:
+  # optimizer
+  optimizer: adam
+  learning_rate: 1e-3
+  weight_decay: 2e-5
+
+  # scheduler
+  num_epochs: 20
+  scheduler: one_cycle
+
+  # trainer
+  monitor: valid_metric
+  log_step: 50
+  val_interval: 1
+  swa: False
+  grad_clip: 0
+
+name: base
+version: v0
+seed: 0
