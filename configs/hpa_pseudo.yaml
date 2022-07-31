@@ -1,12 +1,7 @@
-global:
-  name: &name base_b2
-  fold: &fold 4
-  version: &version f4
-
 model:
   type: SMPModel
   model_type: Unet
-  model_name: timm-efficientnet-b2
+  model_name: timm-efficientnet-b3
   pretrained_weight: noisy-student
   num_classes: 1
 
@@ -21,13 +16,16 @@ metric:
 
 data:
   type: CropData
-  fold: *fold
+  fold: 0
   num_folds: 5
   batch_size: 32
   stratified_by: null
   group_by: null
   dataset:
     image_size: 512
+    data_dir: 
+      - ./data/train
+      - ./data/hpa_unlabeled
     trans: {
       train: [
         {type: HorizontalFlip, p: 0.5},
@@ -70,6 +68,6 @@ train:
   swa: False
   grad_clip: 0
 
-name: *name
-version: *version
+name: hpa_pseudo
+version: f0
 seed: 0

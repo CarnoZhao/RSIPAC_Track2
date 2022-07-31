@@ -41,6 +41,24 @@ def get_one_cycle(self, cfg, optimizer):
     }
     return scheduler
 
+def get_cos_iterwise(self, cfg, optimizer):
+    steps_per_epoch = int(len(self.train_dataloader()))
+    scheduler = {
+        'scheduler': OneCycleLR(
+            optimizer, 
+            pct_start = 0.1, 
+            cycle_momentum = False,
+            max_lr = cfg.learning_rate, 
+            steps_per_epoch = steps_per_epoch, 
+            epochs = cfg.num_epochs, 
+            anneal_strategy = "cos", 
+            three_phase = False), 
+        'name': 'learning_rate', 
+        'interval':'step', 
+        'frequency': 1
+    }
+    return scheduler
+
 def get_cos(self, cfg, optimizer):
     scheduler = LinearWarmupCosineAnnealingLR(optimizer, cfg.warmup_epochs, cfg.num_epochs)
     scheduler = {

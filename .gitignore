@@ -1,3 +1,4 @@
+logs
 *.zip
 weights
 nohup.out

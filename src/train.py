@@ -3,7 +3,7 @@ import pytorch_lightning as pl
 from pytorch_lightning.loggers import CSVLogger
 from pytorch_lightning.callbacks import ModelCheckpoint, RichProgressBar, StochasticWeightAveraging, LearningRateMonitor
 
-def get_trainer(cfg):
+def get_trainer(args, cfg):
 
     # logger
     logger = [
@@ -20,7 +20,8 @@ def get_trainer(cfg):
         ModelCheckpoint(
             dirpath = os.path.join("./logs", cfg.name, cfg.version),
             filename = '{epoch}_{' + monitor + ':.3f}',
-            save_last = False,
+            save_last = True,
+            save_top_k = 3,
             save_weights_only = True,
             mode = "max",
             monitor = monitor),
@@ -34,7 +35,7 @@ def get_trainer(cfg):
     grad_clip = cfg.train.get("grad_clip", 0)
     trainer = pl.Trainer(
         accelerator = "gpu",
-        auto_select_gpus = True, 
+        gpus = list(range(len(args.gpus.split(",")))), 
         precision = 16, 
         strategy = "dp",
         gradient_clip_val = grad_clip,

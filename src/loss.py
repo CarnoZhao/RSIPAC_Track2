@@ -3,6 +3,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from omegaconf import OmegaConf
 
+from .losses import DiceLoss, BCEWithIgnoreLoss
+
 class MultiLoss(nn.Module):
     def __init__(self, loss_cfg):
         super(MultiLoss, self).__init__()
