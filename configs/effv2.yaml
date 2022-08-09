@@ -1,13 +1,13 @@
 global:
-  name: &name base_b2
-  fold: &fold 4
-  version: &version f4
+  name: &name effv2_m
+  fold: &fold 3
+  version: &version f3
 
 model:
   type: SMPModel
   model_type: Unet
-  model_name: timm-efficientnet-b2
-  pretrained_weight: noisy-student
+  model_name: tu-tf_efficientnetv2_m_in21ft1k
+  pretrained_weight: imagenet
   num_classes: 1
 
 loss: [

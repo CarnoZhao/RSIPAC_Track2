@@ -10,6 +10,8 @@ from .builder import build_trans
 class BaseData(Dataset):
     def __init__(self, df, phase, 
             trans = None, 
+            organ_order = False, 
+            drop_organs = [], 
             resample_query = {},
             balance_key = None,
             **dataset_cfg):
@@ -17,6 +19,14 @@ class BaseData(Dataset):
         self.phase = phase
 
         self.trans = build_trans(trans.get(self.phase, None))
+        if drop_organs:
+            self.df = self.df[~self.df.organ.isin(drop_organs)].reset_index(drop = True)
+
+        if organ_order:
+            self.label_map = {o: i + 1 for i, o in enumerate(organ_order)}
+        else:
+            self.label_map = None
+
         self.df["redirect"] = -1
         self.key_df = []
         self.value_df = []
@@ -53,6 +63,9 @@ class BaseData(Dataset):
         img = cv2.imread(image_file)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         mask = cv2.imread(mask_file, cv2.IMREAD_UNCHANGED)
+
+        if self.label_map:
+            mask *= self.label_map[row["organ"]]
 
         if self.trans is not None:
             aug = self.trans(image = img, mask = mask)

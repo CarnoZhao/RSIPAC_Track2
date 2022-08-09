@@ -4,9 +4,11 @@ class DiceMetric(object):
     def __init__(self, 
                 force_binary = False, 
                 per_image = False, 
+                organ_order = [], 
                 drop_background = False):
         self.force_binary = force_binary
         self.per_image = per_image
+        self.organ_order = organ_order
         self.drop_background = drop_background
 
     def preprocess(self, output):
@@ -39,5 +41,16 @@ class DiceMetric(object):
             dice = 2 * dice[:,0] / (dice[:,1] + 1e-6)
             dice = dice.mean(0)
 
+        if not self.organ_order:
+            return {"val_dice": dice}
+        else:
+            if not self.drop_background:
+                met = {"val_dice": dice.mean()}
+                met["val_dice_bg"] = dice[0]
+            else:
+                met = {"val_dice": dice[1:].mean()}
+            for i, organ in enumerate(self.organ_order):
+                met["val_dice_" + organ] = dice[i + 1]
+            return met
         return {"val_dice": dice}
 

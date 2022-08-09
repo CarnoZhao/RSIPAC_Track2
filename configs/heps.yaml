@@ -1,0 +1,89 @@
+global:
+  name: &name fups_sgf2_balaug
+  fold: &fold 1
+  version: &version f1
+
+model:
+  type: Segformer
+  model_name: b2
+  # type: SMPModel
+  # model_type: Unet
+  # model_name: timm-efficientnet-b4
+  # pretrained_weight: noisy-student
+  num_classes: 1
+
+loss: [
+  {type: BCEWithIgnoreLoss, loss_name: bce_loss, ignore_index: 255, loss_weight: 1.0},
+  {type: DiceLoss, loss_name: dice_loss, loss_weight: 1.0},
+]
+
+metric: 
+  type: DiceMetric
+  per_image: True
+
+data:
+  type: RawData
+  fold: *fold
+  num_folds: 5
+  batch_size: 16
+  stratified_by: null
+  group_by: null
+  dataset:
+    image_size: &image_size 768
+    data_dir: [./data/train, ./data/he_unlabeled]
+    drop_organs: [lung]
+    balance_key: organ
+    resample_query: {
+      train: [
+        {query: data_dir == "./data/he_unlabeled" & organ == "kidney", ratio: 0.1},
+        {query: data_dir == "./data/he_unlabeled" & organ == "prostate", ratio: 0.1},
+        {query: data_dir == "./data/he_unlabeled" & organ == "spleen", ratio: 0.1},
+      ]
+    }
+    trans: {
+      train: [
+        {type: Resize, height: *image_size, width: *image_size},
+        {type: HorizontalFlip, p: 0.5},
+        {type: VerticalFlip, p: 0.5},
+        {type: RandomRotate90, p: 0.5},
+        {type: SomeOf, transforms: [
+          {type: ColorJitter, p: 0.5, contrast: 0.0, saturation: 0.4, hue: 0.4, brightness: 0.0},
+          {type: ColorJitter, p: 0.5, contrast: 0.4, saturation: 0.0, hue: 0.0, brightness: 0.0},
+          {type: GaussNoise, p: 0.5},
+        ], p: 1.0, n: 2, replace: False},
+        {type: OneOf, transforms: [
+          {type: ElasticTransform, p: 0.5},
+          {type: GridDistortion, p: 0.5},
+          {type: OpticalDistortion, p: 0.5},
+        ], p: 1.0},
+        {type: ShiftScaleRotate, rotate_limit: 45, border_mode: 0, value: 0, mask_value: 0, p: 0.5},
+        {type: Normalize},
+        {type: ToTensorV2},
+      ],
+      val: [
+        {type: Resize, height: *image_size, width: *image_size},
+        {type: Normalize},
+        {type: ToTensorV2},
+      ]
+    }
+
+train:
+  # optimizer
+  optimizer: adam
+  learning_rate: 1e-3
+  weight_decay: 2e-5
+
+  # scheduler
+  num_epochs: 100
+  scheduler: one_cycle
+
+  # trainer
+  monitor: val_dice
+  log_step: 50
+  val_interval: 5
+  swa: False
+  grad_clip: 2.0
+
+name: *name
+version: *version
+seed: 0

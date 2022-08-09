@@ -1,13 +1,11 @@
 global:
-  name: &name base_b2
-  fold: &fold 4
-  version: &version f4
+  name: &name sgf_b2
+  fold: &fold 0
+  version: &version f0
 
 model:
-  type: SMPModel
-  model_type: Unet
-  model_name: timm-efficientnet-b2
-  pretrained_weight: noisy-student
+  type: Segformer
+  model_name: b2
   num_classes: 1
 
 loss: [
