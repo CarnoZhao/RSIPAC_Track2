@@ -1,5 +1,6 @@
 import numpy as np
 from sklearn.model_selection import StratifiedGroupKFold, StratifiedKFold, GroupKFold, KFold
+import torchsampler
 
 from torch.utils.data import DataLoader
 
@@ -54,8 +55,11 @@ def get_data(cfg):
     ds_train = DataClass(**train_cfg)
     ds_valid = DataClass(**valid_cfg)
 
-    def dl_train(shuffle = True, drop_last = True, num_workers = 8):
-        return DataLoader(ds_train, batch_size, shuffle = shuffle, drop_last = drop_last, num_workers = num_workers)
+    sampler = torchsampler.ImbalancedDatasetSampler(ds_train) if ds_train.balance_key else None
+
+    def dl_train(shuffle = True, drop_last = True, num_workers = 8, sampler = sampler):
+        sampler = {"sampler": sampler} if sampler else {"shuffle": shuffle}
+        return DataLoader(ds_train, batch_size, drop_last = drop_last, num_workers = num_workers, **sampler)
 
     def dl_valid(shuffle = False, num_workers = 8):
         return DataLoader(ds_valid, batch_size, shuffle = shuffle, num_workers = num_workers)

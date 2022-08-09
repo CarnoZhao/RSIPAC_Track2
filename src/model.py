@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-# from .modules import YourModel
+from .models import SMPModel, Segformer, MMSegModel
 
 def get_model(cfg):
     cfg = cfg.copy()

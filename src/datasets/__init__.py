@@ -1,2 +1,1 @@
-from .three_dim import ThreeDimDataset
-from .two_dim import TwoDimDataset
+from .base_dataset import BaseData

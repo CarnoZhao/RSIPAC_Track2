@@ -1,7 +1,7 @@
 import os
 import argparse
 parser = argparse.ArgumentParser()
-parser.add_argument("--config", dest = "config", default = "config.yaml", type = str)
+parser.add_argument("--config", dest = "config", default = "config.yaml", type = str, nargs = "+")
 parser.add_argument("--gpus", dest = "gpus", default = "0", type = str)
 args = parser.parse_args()
 
@@ -13,10 +13,8 @@ from src.dataset import get_data
 from src.model import get_model
 from src.loss import get_loss
 from src.optimizer import get_optimizer
-from src.metrics import get_metric
+from src.metric import get_metric
 from src.train import get_trainer
-
-
 
 class Model(pl.LightningModule):
     def __init__(self, cfg):
@@ -24,7 +22,7 @@ class Model(pl.LightningModule):
         self.cfg = cfg
         self.model = get_model(self.cfg.model)
         self.criterion = get_loss(self.cfg.loss)
-        self.metric, self.metric_preprocess = get_metric(self.cfg.metric)
+        self.metric = get_metric(self.cfg.metric)
 
         self.save_hyperparameters(self.cfg)
 
@@ -58,11 +56,11 @@ class Model(pl.LightningModule):
         yhat = self(x)
         loss = self.criterion(yhat, y)
         for k in loss:
-            self.log("valid_" + k, loss[k], prog_bar = True)
+            self.log("val_" + k, loss[k], prog_bar = True)
         return y, yhat
 
     def validation_step_end(self, output):
-        outputs = self.metric_preprocess(output)
+        outputs = self.metric.preprocess(output)
         return outputs
 
     def validation_epoch_end(self, outputs):
@@ -70,9 +68,11 @@ class Model(pl.LightningModule):
             self.log(k, v, prog_bar = True)
 
 if __name__ == "__main__":
-    cfg = OmegaConf.load(args.config)
-    pl.seed_everything(args.get("seed", 0))
+    for cfg in args.config:
+        cfg = OmegaConf.load(cfg)
+        pl.seed_everything(cfg.get("seed", 0))
 
-    model = Model(cfg)
-    trainer = get_trainer(cfg)
-    trainer.fit(model)
+        model = Model(cfg)
+        trainer = get_trainer(args, cfg)
+        trainer.fit(model)
+    
