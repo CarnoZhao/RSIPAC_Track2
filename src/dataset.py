@@ -4,7 +4,7 @@ import torchsampler
 
 from torch.utils.data import DataLoader
 
-# from .dataset import YourDataset
+from .datasets import datasets as registry
 
 def get_data(cfg):
     data_type = cfg.type 
@@ -16,19 +16,19 @@ def get_data(cfg):
     dataset_cfg = cfg.get("dataset", {})
     
     if data_type is not None:
-        DataClass = eval(data_type)
+        DataClass = registry[data_type]
     else:
         raise NotImplementedError()
 
     df = DataClass.prepare(**dataset_cfg)
 
-    if stratified_by is not None or group_by is not None:
+    if stratified_by is not None and group_by is not None:
         split = StratifiedGroupKFold(num_folds, shuffle = True, random_state = 0)
         train_idx, valid_idx = list(split.split(df, y = df[stratified_by], groups = df[group_by]))[fold]
     elif stratified_by is not None:
         split = StratifiedKFold(num_folds, shuffle = True, random_state = 0)
         train_idx, valid_idx = list(split.split(df, y = df[stratified_by]))[fold]
-    elif stratified_by is not None or group_by is not None:
+    elif group_by is not None:
         split = GroupKFold(num_folds)
         train_idx, valid_idx = list(split.split(df, groups = df[group_by]))[fold]
     elif "fold" in df.columns:

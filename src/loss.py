@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from omegaconf import OmegaConf
 
-from .losses import DiceLoss, BCEWithIgnoreLoss
+from .losses import losses as registry
 
 class MultiLoss(nn.Module):
     def __init__(self, loss_cfg):
@@ -30,7 +30,7 @@ def _get_loss(cfg):
     if loss_type.startswith("nn."):
         return getattr(nn, loss_type[3:])(**cfg)
     else:
-        return eval(loss_type)(**cfg)
+        return registry[loss_type](**cfg)
 
 def get_loss(cfg):
     cfg = cfg.copy()

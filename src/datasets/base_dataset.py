@@ -16,7 +16,7 @@ class BaseData(Dataset):
         self.df = df
         self.phase = phase
 
-        self.trans = build_trans(trans.get(self.phase, None))
+        self.trans = build_trans(trans.get(self.phase, None), trans.get("type", "A"))
         self.df["redirect"] = -1
         self.key_df = []
         self.value_df = []

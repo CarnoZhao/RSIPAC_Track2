@@ -4,7 +4,14 @@ from omegaconf import OmegaConf
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 
+try:
+    import monai.transforms as MA
+except:
+    pass
+
 def build_trans(trans, T = A):
+    if isinstance(T, str):
+        T = eval(T)
     if trans is None: return None
     trans = deepcopy(trans)
     if OmegaConf.is_list(trans):

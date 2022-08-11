@@ -1,4 +1,4 @@
-from .metrics import DiceMetric
+from .metrics import metrics as registry
 
 def get_metric(cfg):
     """
@@ -10,5 +10,5 @@ def get_metric(cfg):
     """
     cfg = cfg.copy()
     if isinstance(cfg, str):
-        return eval(cfg)()
-    return eval(cfg.pop("type"))(**cfg)
+        return registry[cfg]()
+    return registry[cfg.pop("type")](**cfg)
