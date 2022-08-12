@@ -1,13 +1,13 @@
 global:
-  name: &name raw_b4_640sz_32bs_200e
+  name: &name effv2_m
   fold: &fold 4
   version: &version f4
 
 model:
   type: SMPModel
   model_type: Unet
-  model_name: timm-efficientnet-b4
-  pretrained_weight: noisy-student
+  model_name: tu-tf_efficientnetv2_m_in21ft1k
+  pretrained_weight: imagenet
   num_classes: 1
 
 loss: [
@@ -23,15 +23,14 @@ data:
   type: RawData
   fold: *fold
   num_folds: 5
-  batch_size: 32
+  batch_size: 16
   stratified_by: null
   group_by: null
   dataset:
     image_size: &image_size 768
-    resize: &resize 640
     trans: {
       train: [
-        {type: Resize, height: *resize, width: *resize},
+        {type: Resize, height: *image_size, width: *image_size},
         {type: HorizontalFlip, p: 0.5},
         {type: VerticalFlip, p: 0.5},
         {type: RandomRotate90, p: 0.5},
@@ -50,7 +49,7 @@ data:
         {type: ToTensorV2},
       ],
       val: [
-        {type: Resize, height: *resize, width: *resize},
+        {type: Resize, height: *image_size, width: *image_size},
         {type: Normalize},
         {type: ToTensorV2},
       ]
@@ -63,7 +62,7 @@ train:
   weight_decay: 2e-5
 
   # scheduler
-  num_epochs: 200
+  num_epochs: 100
   scheduler: one_cycle
 
   # trainer

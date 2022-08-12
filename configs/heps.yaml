@@ -1,9 +1,20 @@
 global:
-  name: &name heps_b4
+  name: &name fuv2_b4
   fold: &fold 4
   version: &version f4
 
+# full pseudo v1: heps_b4, raw_b7, raw_segformer_b2 
+#                 [NEG - 0.1 - IGNORE - 0.5 - POS]
+#
+# full pseudo v2: fups_b4_noLU, raw_b7, raw_segformer_b2
+#                 [NEG - 0.2 - IGNORE - 0.4 - POS]
+#
+# full pseudo v2: fups_b4_noLU, raw_b7, raw_segformer_b2
+#                 [NEG - 0.1 - IGNORE - 0.5 - POS]
+
 model:
+  # type: Segformer
+  # model_name: b2
   type: SMPModel
   model_type: Unet
   model_name: timm-efficientnet-b4
@@ -29,11 +40,15 @@ data:
   dataset:
     image_size: &image_size 768
     data_dir: [./data/train, ./data/he_unlabeled]
-    downsample: [
-      {query: data_dir == "./data/he_unlabeled" & organ == "kidney", ratio: 0.1},
-      {query: data_dir == "./data/he_unlabeled" & organ == "prostate", ratio: 0.1},
-      {query: data_dir == "./data/he_unlabeled" & organ == "spleen", ratio: 0.1},
-    ]
+    drop_organs: [lung]
+    # balance_key: organ
+    resample_query: {
+      train: [
+        {query: data_dir == "./data/he_unlabeled" & organ == "kidney", ratio: 0.1},
+        {query: data_dir == "./data/he_unlabeled" & organ == "prostate", ratio: 0.1},
+        {query: data_dir == "./data/he_unlabeled" & organ == "spleen", ratio: 0.1},
+      ]
+    }
     trans: {
       train: [
         {type: Resize, height: *image_size, width: *image_size},
