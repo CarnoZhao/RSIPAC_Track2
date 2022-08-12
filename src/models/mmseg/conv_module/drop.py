@@ -2,8 +2,6 @@
 import torch
 import torch.nn as nn
 
-from mmcv import build_from_cfg
-
 from ..utils.registry import build_from_cfg
 
 DROPOUT_LAYERS = {}

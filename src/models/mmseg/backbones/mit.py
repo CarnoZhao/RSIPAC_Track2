@@ -144,13 +144,6 @@ class EfficientMultiheadAttention(MultiheadAttention):
             self.norm = build_norm_layer(norm_cfg, embed_dims)[1]
 
         # handle the BC-breaking from https://github.com/open-mmlab/mmcv/pull/1418 # noqa
-        from mmseg import digit_version, mmcv_version
-        if mmcv_version < digit_version('1.3.17'):
-            warnings.warn('The legacy version of forward function in'
-                          'EfficientMultiheadAttention is deprecated in'
-                          'mmcv>=1.3.17 and will no longer support in the'
-                          'future. Please upgrade your mmcv.')
-            self.forward = self.legacy_forward
 
     def forward(self, x, hw_shape, identity=None):
 

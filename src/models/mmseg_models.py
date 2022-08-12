@@ -76,6 +76,7 @@ class MMSegModel(nn.Module):
         return out
 
     def load_state_dict(self, state_dict, strict):
-        state_dict.pop("decode_head.conv_seg.weight")
-        state_dict.pop("decode_head.conv_seg.bias")
+        if state_dict["decode_head.conv_seg.weight"].shape != self.state_dict()["decode_head.conv_seg.weight"].shape:
+            state_dict.pop("decode_head.conv_seg.weight")
+            state_dict.pop("decode_head.conv_seg.bias")
         return super().load_state_dict(state_dict, strict)
