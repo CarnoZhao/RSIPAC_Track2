@@ -5,7 +5,8 @@ from omegaconf import OmegaConf
 
 
 import timm
-from .mmseg.decode_heads import UPerHead
+from .mmseg.backbones import MixVisionTransformer
+from .mmseg.decode_heads import UPerHead, SegformerHead
 from .mmseg.utils.ops import resize
 from .mmseg.blocks.layer_norm import LayerNorm
 
@@ -21,6 +22,24 @@ class MMSegModel(nn.Module):
         self.prepare_head(decode_head)
 
     def prepare_backbone(self, backbone):
+        backbone = backbone.copy()
+        self.is_timm = False
+        if "type" not in backbone or backbone["type"] == "timm":
+            self.is_timm = True
+            self.prepare_backbone(backbone)
+        elif backbone["type"].startswith("mmseg."):
+            backbone["type"] = backbone["type"][6:]
+            self.prepare_mmseg_backbone(backbone)
+        else:
+            raise NotImplementedError()
+
+    def prepare_mmseg_backbone(self, backbone):
+        backbone = backbone.copy()
+        self.backbone = eval(backbone.pop("type"))(**OmegaConf.to_container(backbone))
+        self.reduction_index = self.backbone.out_indices
+        self.out_channels = [self.backbone.out_channels[i] for i in self.reduction_index]
+
+    def prepare_timm_backbone(self, backbone):
         backbone = backbone.copy()
         reductions = backbone.get("reductions", [4, 8, 16, 32])
         self.backbone = timm.create_model(backbone.model_name, pretrained = True, features_only = True)
@@ -42,7 +61,8 @@ class MMSegModel(nn.Module):
 
     def extract_feat(self, img):
         out = self.backbone(img)
-        out = [getattr(self, f'norm{i}')(out[i]) for i in self.reduction_index]
+        if self.is_timm:
+            out = [getattr(self, f'norm{i}')(out[i]) for i in self.reduction_index]
         return out
 
     def forward(self, img):
@@ -54,3 +74,8 @@ class MMSegModel(nn.Module):
             mode='bilinear',
             align_corners=self.decode_head.align_corners)
         return out
+
+    def load_state_dict(self, state_dict, strict):
+        state_dict.pop("decode_head.conv_seg.weight")
+        state_dict.pop("decode_head.conv_seg.bias")
+        return super().load_state_dict(state_dict, strict)
