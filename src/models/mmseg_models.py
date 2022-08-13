@@ -7,6 +7,7 @@ from omegaconf import OmegaConf
 import timm
 from .mmseg.backbones import BACKBONES
 from .mmseg.decode_heads import HEADS
+from .mmseg.necks import NECKS
 from .mmseg.utils.ops import resize
 from .mmseg.blocks.layer_norm import LayerNorm
 
@@ -15,10 +16,12 @@ class MMSegModel(nn.Module):
     def __init__(self, 
                 backbone,
                 decode_head,
+                neck = None,
                 **kwargs,
                 ):
         super().__init__()
         self.prepare_backbone(backbone)
+        self.prepare_neck(neck)
         self.prepare_head(decode_head)
 
     def prepare_backbone(self, backbone):
@@ -59,8 +62,21 @@ class MMSegModel(nn.Module):
         decode_head["in_index"] = list(range(len(self.out_channels)))
         self.decode_head = HEADS[decode_head.pop("type")](**OmegaConf.to_container(decode_head))
 
+    def prepare_neck(self, neck):
+        if neck is None:
+            self.with_neck = False
+        else:
+            self.with_neck = True
+            neck = neck.copy()
+            neck["in_channels"] = self.out_channels
+            self.neck = NECKS[neck.pop("type")](**OmegaConf.to_container(neck))
+            self.out_channels = self.neck.neck_out_channels
+            
+
     def extract_feat(self, img):
         out = self.backbone(img)
+        if self.with_neck:
+            out = self.neck(out)
         if self.is_timm:
             out = [getattr(self, f'norm{i}')(out[i]) for i in self.reduction_index]
         return out

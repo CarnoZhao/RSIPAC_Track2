@@ -1,0 +1,4 @@
+model:
+  type: Segformer
+  model_name: b1
+  num_classes: 1
