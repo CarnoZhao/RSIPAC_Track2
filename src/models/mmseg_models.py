@@ -5,8 +5,8 @@ from omegaconf import OmegaConf
 
 
 import timm
-from .mmseg.backbones import MixVisionTransformer
-from .mmseg.decode_heads import UPerHead, SegformerHead
+from .mmseg.backbones import BACKBONES
+from .mmseg.decode_heads import HEADS
 from .mmseg.utils.ops import resize
 from .mmseg.blocks.layer_norm import LayerNorm
 
@@ -25,21 +25,21 @@ class MMSegModel(nn.Module):
         backbone = backbone.copy()
         self.is_timm = False
         if "type" not in backbone or backbone["type"] == "timm":
-            self.is_timm = True
             self.prepare_backbone(backbone)
         elif backbone["type"].startswith("mmseg."):
-            backbone["type"] = backbone["type"][6:]
             self.prepare_mmseg_backbone(backbone)
         else:
             raise NotImplementedError()
 
     def prepare_mmseg_backbone(self, backbone):
         backbone = backbone.copy()
-        self.backbone = eval(backbone.pop("type"))(**OmegaConf.to_container(backbone))
+        backbone["type"] = backbone["type"][6:]
+        self.backbone = BACKBONES[backbone.pop("type")](**OmegaConf.to_container(backbone))
         self.reduction_index = self.backbone.out_indices
         self.out_channels = [self.backbone.out_channels[i] for i in self.reduction_index]
 
     def prepare_timm_backbone(self, backbone):
+        self.is_timm = True
         backbone = backbone.copy()
         reductions = backbone.get("reductions", [4, 8, 16, 32])
         self.backbone = timm.create_model(backbone.model_name, pretrained = True, features_only = True)
@@ -57,7 +57,7 @@ class MMSegModel(nn.Module):
         decode_head = decode_head.copy()
         decode_head["in_channels"] = self.out_channels
         decode_head["in_index"] = list(range(len(self.out_channels)))
-        self.decode_head = eval(decode_head.pop("type"))(**OmegaConf.to_container(decode_head))
+        self.decode_head = HEADS[decode_head.pop("type")](**OmegaConf.to_container(decode_head))
 
     def extract_feat(self, img):
         out = self.backbone(img)
