@@ -2,7 +2,7 @@
 import numpy as np
 import torch.nn as nn
 
-from ..conv_module.conv_module import ConvModule
+from ..conv_module import ConvModule
 from ..utils.ops import resize, Upsample
 from .decode_head import BaseDecodeHead
 

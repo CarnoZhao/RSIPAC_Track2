@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 
 from .decode_head import BaseDecodeHead
-from ..conv_module.conv_module import ConvModule
+from ..conv_module import ConvModule
 from ..utils.ops import resize
 
 

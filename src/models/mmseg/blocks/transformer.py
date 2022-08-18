@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 import warnings
-from ..conv_module.drop import build_dropout
+from ..conv_module import build_dropout
 
 class MultiheadAttention(nn.Module):
     """A wrapper for ``torch.nn.MultiheadAttention``.

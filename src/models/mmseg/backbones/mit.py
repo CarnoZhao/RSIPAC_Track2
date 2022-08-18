@@ -6,11 +6,7 @@ import torch
 import torch.nn as nn
 import torch.utils.checkpoint as cp
 
-from ..conv_module.conv import Conv2d
-from ..conv_module.drop import build_dropout
-from ..conv_module.norm import build_norm_layer
-from ..conv_module.weight_init import constant_init, normal_init, trunc_normal_init
-from ..conv_module.activation import build_activation_layer
+from ..conv_module import Conv2d, build_dropout, build_norm_layer, build_activation_layer, constant_init, normal_init, trunc_normal_init
 
 from ..blocks.transformer import MultiheadAttention
 from ..blocks.embed import PatchEmbed

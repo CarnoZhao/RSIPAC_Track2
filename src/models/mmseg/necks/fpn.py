@@ -2,7 +2,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
 
-from ..conv_module.conv_module import ConvModule
+from ..conv_module import ConvModule
 from ..utils.ops import resize
 
 class FPN(nn.Module):

@@ -4,8 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from ..utils.misc import to_2tuple
-from ..conv_module.conv import build_conv_layer
-from ..conv_module.norm import build_norm_layer
+from ..conv_module import build_conv_layer, build_norm_layer
 
 class AdaptivePadding(nn.Module):
     """Applies padding to input (if needed) so that input can get fully covered
