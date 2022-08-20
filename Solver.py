@@ -70,7 +70,7 @@ class Model(pl.LightningModule):
 if __name__ == "__main__":
     for cfg in args.config:
         cfg = OmegaConf.load(cfg)
-        pl.seed_everything(cfg.get("seed", 0))
+        if "seed" in cfg: pl.seed_everything(cfg.seed)
 
         model = Model(cfg)
         trainer = get_trainer(args, cfg)
