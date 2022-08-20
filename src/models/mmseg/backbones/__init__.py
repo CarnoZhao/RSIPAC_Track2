@@ -1,7 +1,9 @@
 from .mit import MixVisionTransformer
-from .pvt import PVTS
+from .pvt import PyramidVisionTransformerV2
+from .coat import CoaT
 
-BACKBONES = {
-    "MixVisionTransformer": MixVisionTransformer,
-    **PVTS
-}
+BACKBONES = {_.__name__: _ for _ in [
+    MixVisionTransformer,
+    PyramidVisionTransformerV2,
+    CoaT,
+]}

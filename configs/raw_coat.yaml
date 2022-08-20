@@ -1,21 +1,31 @@
 global:
-  name: &name swin_s
-  fold: &fold 1
-  version: &version f1
-  image_size: &image_size 768
+  name: &name raw_coatmi
+  fold: &fold 4
+  version: &version f4
 
+norm_cfg: &norm_cfg {type: BN, requires_grad: True}
 model:
   type: MMSegModel
   backbone:
-    model_name: swin_small_patch4_window7_224
-    image_size: *image_size
+    type: mmseg.CoaT
+    model_name: mini
+    pretrained: ./weights/coat_mini_40667eec.pth
   decode_head:
-    type: UPerHead
-    pool_scales: [1, 2, 3, 6]
-    channels: 512
+    type: DAFormerHead
+    channels: 256
     dropout_ratio: 0.1
-    norm_cfg: {type: BN, requires_grad: True}
     num_classes: 1
+    norm_cfg: *norm_cfg
+    align_corners: False
+    decoder_params:
+      embed_dims: 256
+      embed_cfg: {type: mlp, act_cfg: null, norm_cfg: null}
+      embed_neck_cfg: {type: mlp, act_cfg: null, norm_cfg: null}
+      fusion_cfg: 
+        type: conv
+        kernel_size: 1
+        act_cfg: {type: ReLU}
+        norm_cfg: *norm_cfg
 
 loss: [
   {type: BCEWithIgnoreLoss, loss_name: bce_loss, ignore_index: 255, loss_weight: 1.0},
@@ -30,14 +40,15 @@ data:
   type: RawData
   fold: *fold
   num_folds: 5
-  batch_size: 16
+  batch_size: 8
   stratified_by: null
   group_by: null
   dataset:
-    image_size: *image_size
+    image_size: &image_size 768
+    resize: &resize 768
     trans: {
       train: [
-        {type: Resize, height: *image_size, width: *image_size},
+        {type: Resize, height: *resize, width: *resize},
         {type: HorizontalFlip, p: 0.5},
         {type: VerticalFlip, p: 0.5},
         {type: RandomRotate90, p: 0.5},
@@ -56,7 +67,7 @@ data:
         {type: ToTensorV2},
       ],
       val: [
-        {type: Resize, height: *image_size, width: *image_size},
+        {type: Resize, height: *resize, width: *resize},
         {type: Normalize},
         {type: ToTensorV2},
       ]
@@ -78,7 +89,8 @@ train:
   val_interval: 5
   swa: False
   grad_clip: 2.0
+  strategy: ddp
 
 name: *name
 version: *version
-seed: 0
+

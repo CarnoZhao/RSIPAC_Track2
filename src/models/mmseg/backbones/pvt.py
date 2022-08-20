@@ -211,7 +211,7 @@ class OverlapPatchEmbed(nn.Module):
         return x, H, W
 
 
-class PyramidVisionTransformerV2(nn.Module):
+class PyramidVisionTransformerV2_(nn.Module):
     def __init__(self, 
                 img_size=224, 
                 patch_size=16, 
@@ -325,106 +325,38 @@ class DWConv(nn.Module):
 
         return x
 
+class PyramidVisionTransformerV2(PyramidVisionTransformerV2_):
+    def __init__(self, model_name = None, pretrained = None, **kwargs):
+        if model_name is None:
+            super(PyramidVisionTransformerV2, self).__init__(**kwargs)
+        elif model_name in ("b0", "b1", "b2", "b3", "b4", "b5"):
+            
+            kwargs["patch_size"] = 4
+            kwargs["embed_dims"] = {
+                "b0": [32, 64, 160, 256]
+            }.get(model_name, [64, 128, 320, 512])
+            kwargs["num_heads"] = [1, 2, 5, 8]
+            kwargs["mlp_ratios"] = {
+                "b5": [4, 4, 4, 4]
+            }.get(model_name, [8, 8, 4, 4])
+            kwargs["qkv_bias"] = True
+            kwargs["norm_layer"] = partial(nn.LayerNorm, eps=1e-6)
+            kwargs["depths"] = {
+                "b0": [2, 2, 2, 2],
+                "b1": [2, 2, 2, 2],
+                "b2": [3, 4, 6, 3],
+                "b3": [3, 4, 18, 3],
+                "b4": [3, 8, 27, 3],
+                "b5": [3, 6, 40, 3],
+            }[model_name]
+            kwargs["sr_ratios"] = [8, 4, 2, 1]
 
-def _conv_filter(state_dict, patch_size=16):
-    """ convert patch embedding weight from manual patchify + linear proj to conv"""
-    out_dict = {}
-    for k, v in state_dict.items():
-        if 'patch_embed.proj.weight' in k:
-            v = v.reshape((v.shape[0], 3, patch_size, patch_size))
-        out_dict[k] = v
+            super(PyramidVisionTransformerV2, self).__init__(**kwargs)
 
-    return out_dict
+        self.default_cfg = _cfg()
+        if pretrained:
+            self.load_pretrained(pretrained)
 
-def load_pretrained(model, pretrained):
-    stt = torch.load(pretrained, map_location = "cpu")
-    model.load_state_dict(stt, strict = False)
-
-
-def PVT_b0(pretrained=False, **kwargs):
-    model = PyramidVisionTransformerV2(
-        patch_size=4, embed_dims=[32, 64, 160, 256], num_heads=[1, 2, 5, 8], mlp_ratios=[8, 8, 4, 4], qkv_bias=True,
-        norm_layer=partial(nn.LayerNorm, eps=1e-6), depths=[2, 2, 2, 2], sr_ratios=[8, 4, 2, 1],
-        **kwargs)
-    model.default_cfg = _cfg()
-    if pretrained:
-        load_pretrained(model, pretrained)
-
-    return model
-
-
-
-def PVT_b1(pretrained=False, **kwargs):
-    model = PyramidVisionTransformerV2(
-        patch_size=4, embed_dims=[64, 128, 320, 512], num_heads=[1, 2, 5, 8], mlp_ratios=[8, 8, 4, 4], qkv_bias=True,
-        norm_layer=partial(nn.LayerNorm, eps=1e-6), depths=[2, 2, 2, 2], sr_ratios=[8, 4, 2, 1],
-        **kwargs)
-    model.default_cfg = _cfg()
-    if pretrained:
-        load_pretrained(model, pretrained)
-
-    return model
-
-
-def PVT_b2(pretrained=False, **kwargs):
-    model = PyramidVisionTransformerV2(
-        patch_size=4, embed_dims=[64, 128, 320, 512], num_heads=[1, 2, 5, 8], mlp_ratios=[8, 8, 4, 4], qkv_bias=True,
-        norm_layer=partial(nn.LayerNorm, eps=1e-6), depths=[3, 4, 6, 3], sr_ratios=[8, 4, 2, 1], **kwargs)
-    model.default_cfg = _cfg()
-    if pretrained:
-        load_pretrained(model, pretrained)
-
-    return model
-
-
-
-def PVT_b3(pretrained=False, **kwargs):
-    model = PyramidVisionTransformerV2(
-        patch_size=4, embed_dims=[64, 128, 320, 512], num_heads=[1, 2, 5, 8], mlp_ratios=[8, 8, 4, 4], qkv_bias=True,
-        norm_layer=partial(nn.LayerNorm, eps=1e-6), depths=[3, 4, 18, 3], sr_ratios=[8, 4, 2, 1],
-        **kwargs)
-    model.default_cfg = _cfg()
-    if pretrained:
-        load_pretrained(model, pretrained)
-
-    return model
-
-
-def PVT_b4(pretrained=False, **kwargs):
-    model = PyramidVisionTransformerV2(
-        patch_size=4, embed_dims=[64, 128, 320, 512], num_heads=[1, 2, 5, 8], mlp_ratios=[8, 8, 4, 4], qkv_bias=True,
-        norm_layer=partial(nn.LayerNorm, eps=1e-6), depths=[3, 8, 27, 3], sr_ratios=[8, 4, 2, 1],
-        **kwargs)
-    model.default_cfg = _cfg()
-    if pretrained:
-        load_pretrained(model, pretrained)
-
-    return model
-
-
-def PVT_b5(pretrained=False, **kwargs):
-    model = PyramidVisionTransformerV2(
-        patch_size=4, embed_dims=[64, 128, 320, 512], num_heads=[1, 2, 5, 8], mlp_ratios=[4, 4, 4, 4], qkv_bias=True,
-        norm_layer=partial(nn.LayerNorm, eps=1e-6), depths=[3, 6, 40, 3], sr_ratios=[8, 4, 2, 1],
-        **kwargs)
-    model.default_cfg = _cfg()
-    if pretrained:
-        load_pretrained(model, pretrained)
-
-    return model
-
-
-
-def PVT_b2_li(pretrained=False, **kwargs):
-    model = PyramidVisionTransformerV2(
-        patch_size=4, embed_dims=[64, 128, 320, 512], num_heads=[1, 2, 5, 8], mlp_ratios=[8, 8, 4, 4], qkv_bias=True,
-        norm_layer=partial(nn.LayerNorm, eps=1e-6), depths=[3, 4, 6, 3], sr_ratios=[8, 4, 2, 1], linear=True, **kwargs)
-    model.default_cfg = _cfg()
-    if pretrained:
-        load_pretrained(model, pretrained)
-
-    return model
-
-PVTS = {
-    f"PVT_b{i}": eval(f"PVT_b{i}") for i in range(6)
-}
+    def load_pretrained(self, pretrained):
+        stt = torch.load(pretrained, map_location = "cpu")
+        self.load_state_dict(stt, strict = False)
