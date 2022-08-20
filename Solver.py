@@ -24,6 +24,7 @@ class Model(pl.LightningModule):
         self.criterion = get_loss(self.cfg.loss)
         self.metric = get_metric(self.cfg.metric)
 
+        self.prepare_data()
         self.save_hyperparameters(self.cfg)
 
     def prepare_data(self):
