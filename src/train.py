@@ -41,6 +41,7 @@ def get_trainer(args, cfg):
         precision = 16, 
         strategy = "dp",
         gradient_clip_val = grad_clip,
+        accumulate_grad_batches = cfg.train.get("grad_acc", 1),
         max_epochs = cfg.train.num_epochs,
         logger = logger,
         callbacks = callbacks,
