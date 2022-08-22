@@ -42,6 +42,7 @@ def get_trainer(args, cfg):
         gpus = list(range(len(args.gpus.split(",")))), 
         precision = 16, 
         strategy = cfg.train.get("strategy", "dp"),
+        sync_batchnorm = cfg.train.get("strategy", "dp") == "ddp",
         gradient_clip_val = grad_clip,
         accumulate_grad_batches = cfg.train.get("grad_acc", 1),
         max_epochs = cfg.train.num_epochs,

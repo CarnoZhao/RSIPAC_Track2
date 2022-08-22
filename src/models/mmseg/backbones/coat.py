@@ -344,7 +344,7 @@ class CoaT_(nn.Module):
                 return_interm_layers=True, 
                 out_features=None, 
                 crpe_window={3:2, 5:3, 7:3},
-                out_norm=nn.Identity,
+                out_norm=nn.LayerNorm,
                 out_indices=[0, 1, 2, 3],
                 **kwargs):
         super().__init__()
@@ -507,18 +507,19 @@ class CoaT_(nn.Module):
             x1, x2, x3, x4 = blk(x1, x2, x3, x4, sizes=[(H1, W1), (H2, W2), (H3, W3), (H4, W4)])
 
         x1_nocls = self.remove_cls(x1)
-        x1_nocls = x1_nocls.reshape(B, H1, W1, -1).permute(0, 3, 1, 2).contiguous()
         x2_nocls = self.remove_cls(x2)
-        x2_nocls = x2_nocls.reshape(B, H2, W2, -1).permute(0, 3, 1, 2).contiguous()
         x3_nocls = self.remove_cls(x3)
-        x3_nocls = x3_nocls.reshape(B, H3, W3, -1).permute(0, 3, 1, 2).contiguous()
         x4_nocls = self.remove_cls(x4)
-        x4_nocls = x4_nocls.reshape(B, H4, W4, -1).permute(0, 3, 1, 2).contiguous()
 
         x1_nocls = self.out_norm[0](x1_nocls)
         x2_nocls = self.out_norm[1](x2_nocls)
         x3_nocls = self.out_norm[2](x3_nocls)
         x4_nocls = self.out_norm[3](x4_nocls)
+
+        x1_nocls = x1_nocls.reshape(B, H1, W1, -1).permute(0, 3, 1, 2).contiguous()
+        x2_nocls = x2_nocls.reshape(B, H2, W2, -1).permute(0, 3, 1, 2).contiguous()
+        x3_nocls = x3_nocls.reshape(B, H3, W3, -1).permute(0, 3, 1, 2).contiguous()
+        x4_nocls = x4_nocls.reshape(B, H4, W4, -1).permute(0, 3, 1, 2).contiguous()
         return [x1_nocls, x2_nocls, x3_nocls, x4_nocls]
 
 #@register_model
@@ -553,4 +554,6 @@ class CoaT(CoaT_):
 
     def load_pretrained(self, pretrained):
         stt = torch.load(pretrained, map_location = "cpu")
+        if "model" in stt:
+            stt = stt["model"]
         self.load_state_dict(stt, strict = False)
