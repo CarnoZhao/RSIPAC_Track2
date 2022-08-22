@@ -4,7 +4,6 @@ import torch.nn.functional as F
 from functools import partial
 
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
-from timm.models.vision_transformer import _cfg
 import math
 
 
@@ -230,7 +229,8 @@ class PyramidVisionTransformerV2_(nn.Module):
                 sr_ratios=[8, 4, 2, 1], 
                 num_stages=4, 
                 linear=False,
-                out_indices=[0, 1, 2, 3]):
+                out_indices=[0, 1, 2, 3],
+                num_freeze_stage=0):
         super().__init__()
         self.num_classes = num_classes
         self.depths = depths
@@ -264,6 +264,16 @@ class PyramidVisionTransformerV2_(nn.Module):
         # classification head
 
         self.apply(self._init_weights)
+        self.freeze_stages(num_freeze_stage)
+
+    def freeze_stages(self, num_freeze_stage):
+        for i in range(num_freeze_stage):
+            patch_embed = getattr(self, f"patch_embed{i + 1}")
+            block = getattr(self, f"block{i + 1}")
+            norm = getattr(self, f"norm{i + 1}")
+            patch_embed.requires_grad_(False)
+            block.requires_grad_(False)
+            norm.requires_grad_(False)
 
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
@@ -286,13 +296,6 @@ class PyramidVisionTransformerV2_(nn.Module):
     @torch.jit.ignore
     def no_weight_decay(self):
         return {'pos_embed1', 'pos_embed2', 'pos_embed3', 'pos_embed4', 'cls_token'}  # has pos_embed may be better
-
-    def get_classifier(self):
-        return self.head
-
-    def reset_classifier(self, num_classes, global_pool=''):
-        self.num_classes = num_classes
-        self.head = nn.Linear(self.embed_dim, num_classes) if num_classes > 0 else nn.Identity()
 
     def forward(self, x):
         B = x.shape[0]
@@ -353,7 +356,6 @@ class PyramidVisionTransformerV2(PyramidVisionTransformerV2_):
 
             super(PyramidVisionTransformerV2, self).__init__(**kwargs)
 
-        self.default_cfg = _cfg()
         if pretrained:
             self.load_pretrained(pretrained)
 
