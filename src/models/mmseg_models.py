@@ -16,6 +16,7 @@ class MMSegModel(nn.Module):
     def __init__(self, 
                 backbone,
                 decode_head,
+                aux_head = None,
                 neck = None,
                 **kwargs,
                 ):
@@ -23,6 +24,7 @@ class MMSegModel(nn.Module):
         self.prepare_backbone(backbone)
         self.prepare_neck(neck)
         self.prepare_head(decode_head)
+        self.prepare_aux_head(aux_head)
 
     def prepare_backbone(self, backbone):
         backbone = backbone.copy()
@@ -62,6 +64,15 @@ class MMSegModel(nn.Module):
         decode_head["in_index"] = list(range(len(self.out_channels)))
         self.decode_head = HEADS[decode_head.pop("type")](**OmegaConf.to_container(decode_head))
 
+    def prepare_aux_head(self, aux_head):
+        if aux_head is None:
+            self.with_aux_head = False
+        else:
+            self.with_aux_head = True
+            aux_head = aux_head.copy()
+            aux_head["in_channels"] = self.out_channels[aux_head["in_index"]]
+            self.aux_head = HEADS[aux_head.pop("type")](**OmegaConf.to_container(aux_head))
+
     def prepare_neck(self, neck):
         if neck is None:
             self.with_neck = False
@@ -89,6 +100,14 @@ class MMSegModel(nn.Module):
             size=img.shape[2:],
             mode='bilinear',
             align_corners=self.decode_head.align_corners)
+        if self.with_aux_head:
+            aux_out = self.aux_head.forward_test(x)
+            aux_out = resize(
+                input=aux_out,
+                size=img.shape[2:],
+                mode='bilinear',
+                align_corners=self.aux_head.align_corners)
+            return out, aux_out
         return out
 
     def load_state_dict(self, state_dict, strict):
