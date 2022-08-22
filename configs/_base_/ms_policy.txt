@@ -1,0 +1,33 @@
+
+on fc:
+  by_index: all
+  enable: True
+  level: 256
+  ema_decay: 0.9
+
+on matmul:
+  by_index: all
+  enable: True
+  level: 256
+  ema_decay: 0.9
+
+on gelu:
+  by_index: all
+  enable: True
+  level: 256
+  ema_decay: 0.9
+
+on layernorm:
+  by_index: all
+  enable: True
+  level: 256
+  ema_decay: 0.9
+
+  by_index: 0
+  enable: False
+
+on softmax:
+  by_index: all
+  enable: True
+  level: 256
+  ema_decay: 0.9

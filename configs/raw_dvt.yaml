@@ -1,0 +1,97 @@
+global:
+  name: &name raw_dvs
+  fold: &fold 1
+  version: &version f1
+
+norm_cfg: &norm_cfg {type: BN, requires_grad: True}
+model:
+  type: MMSegModel
+  backbone:
+    type: mmseg.DualViT
+    model_name: small
+    pretrained: ./weights/dualvit_s_384.pth
+  decode_head:
+    type: DAFormerHead
+    channels: 256
+    dropout_ratio: 0.1
+    num_classes: 1
+    norm_cfg: *norm_cfg
+    align_corners: False
+    decoder_params:
+      embed_dims: 256
+      embed_cfg: {type: mlp, act_cfg: null, norm_cfg: null}
+      embed_neck_cfg: {type: mlp, act_cfg: null, norm_cfg: null}
+      fusion_cfg: 
+        type: conv
+        kernel_size: 3
+        act_cfg: {type: ReLU}
+        norm_cfg: *norm_cfg
+
+
+loss: [
+  {type: BCEWithIgnoreLoss, loss_name: bce_loss, ignore_index: 255, loss_weight: 1.0},
+  {type: DiceLoss, loss_name: dice_loss, loss_weight: 1.0},
+]
+
+metric: 
+  type: DiceMetric
+  per_image: True
+
+data:
+  type: RawData
+  fold: *fold
+  num_folds: 5
+  batch_size: 4
+  stratified_by: null
+  group_by: null
+  dataset:
+    image_size: &image_size 768
+    resize: &resize 768
+    trans: {
+      train: [
+        {type: Resize, height: *resize, width: *resize},
+        {type: HorizontalFlip, p: 0.5},
+        {type: VerticalFlip, p: 0.5},
+        {type: RandomRotate90, p: 0.5},
+        {type: ShiftScaleRotate, rotate_limit: 45, border_mode: 0, value: 0, mask_value: 0, p: 0.5},
+        {type: OneOf, transforms: [
+          {type: ElasticTransform, p: 0.5},
+          {type: GridDistortion, p: 0.5},
+          {type: OpticalDistortion, p: 0.5},
+        ], p: 1.0},
+        {type: SomeOf, transforms: [
+          {type: ColorJitter, p: 0.5, contrast: 0.0, saturation: 0.4, hue: 0.4, brightness: 0.0},
+          {type: ColorJitter, p: 0.5, contrast: 0.4, saturation: 0.0, hue: 0.0, brightness: 0.0},
+          {type: GaussNoise, p: 0.5},
+        ], p: 1.0, n: 2, replace: False},
+        {type: Normalize},
+        {type: ToTensorV2},
+      ],
+      val: [
+        {type: Resize, height: *resize, width: *resize},
+        {type: Normalize},
+        {type: ToTensorV2},
+      ]
+    }
+
+train:
+  # optimizer
+  optimizer: adam
+  learning_rate: 1e-3
+  weight_decay: 2e-5
+
+  # scheduler
+  num_epochs: 100
+  scheduler: one_cycle
+
+  # trainer
+  monitor: val_dice
+  log_step: 50
+  val_interval: 5
+  swa: True
+  grad_clip: 2.0
+  strategy: dp
+
+name: *name
+version: *version
+
