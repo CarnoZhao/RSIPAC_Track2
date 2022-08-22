@@ -2,6 +2,7 @@ import numpy as np
 from sklearn.model_selection import StratifiedGroupKFold, StratifiedKFold, GroupKFold, KFold
 import torchsampler
 
+import torch
 from torch.utils.data import DataLoader
 
 from .datasets import CropData, RawData
@@ -59,7 +60,12 @@ def get_data(cfg):
 
     def dl_train(shuffle = True, drop_last = True, num_workers = 8, sampler = sampler):
         sampler = {"sampler": sampler} if sampler else {"shuffle": shuffle}
-        return DataLoader(ds_train, batch_size, drop_last = drop_last, num_workers = num_workers, **sampler)
+        return DataLoader(ds_train, 
+                        batch_size, 
+                        drop_last = drop_last, 
+                        num_workers = num_workers,
+		                worker_init_fn = lambda id: np.random.seed(torch.initial_seed() // 2 ** 32 + id), 
+                        **sampler)
 
     def dl_valid(shuffle = False, num_workers = 8):
         return DataLoader(ds_valid, batch_size, shuffle = shuffle, num_workers = num_workers)
