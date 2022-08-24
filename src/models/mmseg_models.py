@@ -100,7 +100,7 @@ class MMSegModel(nn.Module):
             size=img.shape[2:],
             mode='bilinear',
             align_corners=self.decode_head.align_corners)
-        if self.with_aux_head:
+        if self.with_aux_head and self.training:
             aux_out = self.aux_head.forward_test(x)
             aux_out = resize(
                 input=aux_out,

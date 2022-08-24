@@ -13,8 +13,6 @@ class DiceMetric(object):
 
     def preprocess(self, output):
         y, yhat = output
-        if isinstance(yhat, tuple):
-            yhat = yhat[0]
         y = y.detach().cpu().float()
         yhat = yhat.detach().cpu().float()
         if len(y.shape) != len(yhat.shape) and yhat.shape[1] != 1:

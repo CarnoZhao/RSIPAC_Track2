@@ -34,6 +34,8 @@ class MultiInputLoss(nn.Module):
 
     def forward(self, inputs_list, target):
         losses = defaultdict(int)
+        if not isinstance(inputs_list, tuple):
+            inputs_list = (inputs_list,)
         sum_weights = 0
         for idx, (w, inputs) in enumerate(zip(self.weight, inputs_list)):
             loss = self.func(inputs, target)
