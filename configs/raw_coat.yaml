@@ -1,15 +1,15 @@
 global:
-  name: &name raw_coatmi
-  fold: &fold 4
-  version: &version f4
+  name: &name raw_coatsm
+  fold: &fold 2
+  version: &version f2
 
 norm_cfg: &norm_cfg {type: BN, requires_grad: True}
 model:
   type: MMSegModel
   backbone:
     type: mmseg.CoaT
-    model_name: mini
-    pretrained: ./weights/coat_mini_40667eec.pth
+    model_name: small
+    pretrained: ./weights/coat_small_7479cf9b.pth
   decode_head:
     type: DAFormerHead
     channels: 256
@@ -23,7 +23,7 @@ model:
       embed_neck_cfg: {type: mlp, act_cfg: null, norm_cfg: null}
       fusion_cfg: 
         type: conv
-        kernel_size: 1
+        kernel_size: 3
         act_cfg: {type: ReLU}
         norm_cfg: *norm_cfg
 
@@ -89,6 +89,7 @@ train:
   val_interval: 5
   swa: False
   grad_clip: 2.0
+  grad_acc: 2
   strategy: ddp
 
 name: *name

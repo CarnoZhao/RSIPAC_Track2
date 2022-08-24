@@ -1,12 +1,12 @@
 global:
-  name: &name raw_b4_640sz_32bs_200e
-  fold: &fold 4
-  version: &version f4
+  name: &name raw_b7_stain
+  fold: &fold 2
+  version: &version f2
 
 model:
   type: SMPModel
   model_type: Unet
-  model_name: timm-efficientnet-b4
+  model_name: timm-efficientnet-b7
   pretrained_weight: noisy-student
   num_classes: 1
 
@@ -23,12 +23,12 @@ data:
   type: RawData
   fold: *fold
   num_folds: 5
-  batch_size: 32
+  batch_size: 8
   stratified_by: null
   group_by: null
   dataset:
     image_size: &image_size 768
-    resize: &resize 640
+    resize: &resize 768
     trans: {
       train: [
         {type: Resize, height: *resize, width: *resize},
@@ -46,6 +46,7 @@ data:
           {type: ColorJitter, p: 0.5, contrast: 0.4, saturation: 0.0, hue: 0.0, brightness: 0.0},
           {type: GaussNoise, p: 0.5},
         ], p: 1.0, n: 2, replace: False},
+        {type: StainTools, p: 0.5},
         {type: Normalize},
         {type: ToTensorV2},
       ],
@@ -63,16 +64,17 @@ train:
   weight_decay: 2e-5
 
   # scheduler
-  num_epochs: 200
+  num_epochs: 100
   scheduler: one_cycle
 
   # trainer
   monitor: val_dice
   log_step: 50
   val_interval: 5
-  swa: False
+  swa: True
+  grad_acc: 2
   grad_clip: 2.0
 
 name: *name
 version: *version
-seed: 0
+

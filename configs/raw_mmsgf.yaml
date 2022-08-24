@@ -1,5 +1,5 @@
 global:
-  name: &name raw_mmsgf2
+  name: &name raw_mmsgf2_swa
   fold: &fold 0
   version: &version f0
 
@@ -93,9 +93,9 @@ train:
   monitor: val_dice
   log_step: 50
   val_interval: 5
-  swa: False
+  swa: True
   grad_clip: 2.0
 
 name: *name
 version: *version
-seed: 0
+

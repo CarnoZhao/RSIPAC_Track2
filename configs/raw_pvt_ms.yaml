@@ -1,15 +1,17 @@
 global:
-  name: &name raw_pv2d_stain
-  fold: &fold 4
-  version: &version f4
+  name: &name raw_pv2d_ms
+  fold: &fold 3
+  version: &version f3
 
 norm_cfg: &norm_cfg {type: BN, requires_grad: True}
 model:
   type: MMSegModel
+  load_from: ./logs/raw_pvt2daf/f3/epoch*.ckpt
   backbone:
-    type: mmseg.PyramidVisionTransformerV2
+    type: mmseg.PyramidVisionTransformerV2MS
     model_name: b2
     pretrained: ./weights/pvt_v2_b2.pth
+    policy_path: ./configs/_base_/ms_policy.txt
   decode_head:
     type: DAFormerHead
     channels: 256
@@ -27,16 +29,11 @@ model:
         act_cfg: {type: ReLU}
         norm_cfg: *norm_cfg
 
-loss: [{
-  type: BCEWithIgnoreLoss, 
-  loss_name: bce_loss, 
-  ignore_index: 255, 
-  loss_weight: 1.0,
-}, {
-  type: DiceLoss, 
-  loss_name: dice_loss, 
-  loss_weight: 1.0, 
-}]
+
+loss: [
+  {type: BCEWithIgnoreLoss, loss_name: bce_loss, ignore_index: 255, loss_weight: 1.0},
+  {type: DiceLoss, loss_name: dice_loss, loss_weight: 1.0},
+]
 
 metric: 
   type: DiceMetric
@@ -46,12 +43,12 @@ data:
   type: RawData
   fold: *fold
   num_folds: 5
-  batch_size: 16
+  batch_size: 12
   stratified_by: null
   group_by: null
   dataset:
-    image_size: &image_size 768
-    resize: &resize 768
+    image_size: &image_size 1024
+    resize: &resize 1024
     trans: {
       train: [
         {type: Resize, height: *resize, width: *resize},
@@ -68,7 +65,6 @@ data:
           {type: ColorJitter, p: 0.5, contrast: 0.0, saturation: 0.4, hue: 0.4, brightness: 0.0},
           {type: ColorJitter, p: 0.5, contrast: 0.4, saturation: 0.0, hue: 0.0, brightness: 0.0},
           {type: GaussNoise, p: 0.5},
-          {type: StainTools, p: 0.5}
         ], p: 1.0, n: 2, replace: False},
         {type: Normalize},
         {type: ToTensorV2},
@@ -83,18 +79,18 @@ data:
 train:
   # optimizer
   optimizer: adam
-  learning_rate: 1e-3
+  learning_rate: 1e-4
   weight_decay: 2e-5
 
   # scheduler
-  num_epochs: 100
-  scheduler: one_cycle
+  num_epochs: 20
+  scheduler: cos_iterwise
 
   # trainer
   monitor: val_dice
   log_step: 50
-  val_interval: 5
-  swa: True
+  val_interval: 1
+  swa: False
   grad_clip: 2.0
   strategy: dp
 

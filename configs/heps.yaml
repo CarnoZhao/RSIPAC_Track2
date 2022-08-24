@@ -1,30 +1,56 @@
 global:
-  name: &name fuv2_b4
+  name: &name fups_pv2d
   fold: &fold 4
   version: &version f4
 
-# full pseudo v1: heps_b4, raw_b7, raw_segformer_b2 
-#                 [NEG - 0.1 - IGNORE - 0.5 - POS]
-#
-# full pseudo v2: fups_b4_noLU, raw_b7, raw_segformer_b2
-#                 [NEG - 0.2 - IGNORE - 0.4 - POS]
-#
-# full pseudo v2: fups_b4_noLU, raw_b7, raw_segformer_b2
-#                 [NEG - 0.1 - IGNORE - 0.5 - POS]
-
+norm_cfg: &norm_cfg {type: BN, requires_grad: True}
 model:
-  # type: Segformer
-  # model_name: b2
-  type: SMPModel
-  model_type: Unet
-  model_name: timm-efficientnet-b4
-  pretrained_weight: noisy-student
-  num_classes: 1
+  type: MMSegModel
+  backbone:
+    type: mmseg.PyramidVisionTransformerV2
+    model_name: b2
+    pretrained: ./weights/pvt_v2_b2.pth
+  decode_head:
+    type: DAFormerHead
+    channels: 256
+    dropout_ratio: 0.1
+    num_classes: 1
+    norm_cfg: *norm_cfg
+    align_corners: False
+    decoder_params:
+      embed_dims: 256
+      embed_cfg: {type: mlp, act_cfg: null, norm_cfg: null}
+      embed_neck_cfg: {type: mlp, act_cfg: null, norm_cfg: null}
+      fusion_cfg: 
+        type: conv
+        kernel_size: 3
+        act_cfg: {type: ReLU}
+        norm_cfg: *norm_cfg
+  # aux_head:
+  #   type: FCNHead
+  #   in_index: 2
+  #   channels: 256
+  #   num_convs: 1
+  #   concat_inputs: False
+  #   dropout_ratio: 0.1
+  #   num_classes: 1
+  #   norm_cfg: *norm_cfg
+  #   align_corners: False
 
-loss: [
-  {type: BCEWithIgnoreLoss, loss_name: bce_loss, ignore_index: 255, loss_weight: 1.0},
-  {type: DiceLoss, loss_name: dice_loss, loss_weight: 1.0},
-]
+loss: {
+  losses: [{
+      type: BCEWithIgnoreLoss, 
+      loss_name: bce_loss, 
+      ignore_index: 255, 
+      loss_weight: 1.0,
+    }, {
+      type: DiceLoss, 
+      loss_name: dice_loss, 
+      loss_weight: 1.0, 
+    }],
+  # multi_inputs: True,
+  # input_weights: [1, 1]
+}
 
 metric: 
   type: DiceMetric
@@ -39,6 +65,7 @@ data:
   group_by: null
   dataset:
     image_size: &image_size 768
+    resize: &resize 768
     data_dir: [./data/train, ./data/he_unlabeled]
     drop_organs: [lung]
     # balance_key: organ
@@ -51,7 +78,7 @@ data:
     }
     trans: {
       train: [
-        {type: Resize, height: *image_size, width: *image_size},
+        {type: Resize, height: *resize, width: *resize},
         {type: HorizontalFlip, p: 0.5},
         {type: VerticalFlip, p: 0.5},
         {type: RandomRotate90, p: 0.5},
@@ -70,7 +97,7 @@ data:
         {type: ToTensorV2},
       ],
       val: [
-        {type: Resize, height: *image_size, width: *image_size},
+        {type: Resize, height: *resize, width: *resize},
         {type: Normalize},
         {type: ToTensorV2},
       ]
@@ -90,9 +117,10 @@ train:
   monitor: val_dice
   log_step: 50
   val_interval: 5
-  swa: False
+  swa: True
   grad_clip: 2.0
+  strategy: dp
 
 name: *name
 version: *version
-seed: 0
+
