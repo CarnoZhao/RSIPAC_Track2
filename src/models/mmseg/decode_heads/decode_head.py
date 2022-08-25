@@ -55,7 +55,8 @@ class BaseDecodeHead(nn.Module):
                  in_index=-1,
                  input_transform=None,
                  ignore_index=255,
-                 align_corners=False):
+                 align_corners=False,
+                 **kwargs):
         super(BaseDecodeHead, self).__init__()
         self._init_inputs(in_channels, in_index, input_transform)
         self.channels = channels

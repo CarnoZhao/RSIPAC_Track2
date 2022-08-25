@@ -24,6 +24,7 @@ class Model(pl.LightningModule):
         self.criterion = get_loss(self.cfg.loss)
         self.metric = get_metric(self.cfg.metric)
 
+        self.prepare_data()
         self.save_hyperparameters(self.cfg)
 
     def prepare_data(self):
@@ -70,7 +71,7 @@ class Model(pl.LightningModule):
 if __name__ == "__main__":
     for cfg in args.config:
         cfg = OmegaConf.load(cfg)
-        pl.seed_everything(cfg.get("seed", 0))
+        if "seed" in cfg: pl.seed_everything(cfg.seed)
 
         model = Model(cfg)
         trainer = get_trainer(args, cfg)

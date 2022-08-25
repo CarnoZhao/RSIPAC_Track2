@@ -1,0 +1,6 @@
+model:
+  type: SMPModel
+  model_type: Unet
+  model_name: timm-efficientnet-b2
+  pretrained_weight: noisy-student
+  num_classes: 1

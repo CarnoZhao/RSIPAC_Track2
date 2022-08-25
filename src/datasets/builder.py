@@ -4,10 +4,8 @@ from omegaconf import OmegaConf
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 
-try:
-    import monai.transforms as MA
-except:
-    pass
+from .augments import AUGS
+AUGS = {_.__name__: _ for _ in AUGS}
 
 def build_trans(trans, T = A):
     if isinstance(T, str):
@@ -21,5 +19,7 @@ def build_trans(trans, T = A):
     elif trans["type"] == "ToTensorV2":
         trans.pop("type")
         return ToTensorV2(**trans)
+    elif trans["type"] in AUGS:
+        return AUGS[trans.pop("type")](**trans)
     else:
         return getattr(T, trans.pop("type"))(**trans)

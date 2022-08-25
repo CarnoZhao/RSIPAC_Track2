@@ -1,0 +1,29 @@
+model:
+  type: MMSegModel
+  load_from: ./weights/segformer_mit-b2_512x512_160k_ade20k_20220620_114047-64e4feca.pth
+  backbone:
+    type: mmseg.MixVisionTransformer
+    in_channels: 3
+    embed_dims: 64
+    num_stages: 4
+    num_layers: [3, 4, 6, 3] # b2
+    # num_layers: [3, 8, 27, 3] # b4
+    num_heads: [1, 2, 5, 8]
+    patch_sizes: [7, 3, 3, 3]
+    sr_ratios: [8, 4, 2, 1]
+    out_indices: [0, 1, 2, 3]
+    with_cp: False
+    mlp_ratio: 4
+    qkv_bias: True
+    drop_rate: 0.0
+    attn_drop_rate: 0.0
+    drop_path_rate: 0.1
+  decode_head:
+    type: SegformerHead
+    in_channels: [64, 128, 320, 512]
+    in_index: [0, 1, 2, 3]
+    channels: 256
+    dropout_ratio: 0.1
+    norm_cfg: {type: 'BN', requires_grad: True}
+    align_corners: False
+    num_classes: 1

@@ -5,7 +5,7 @@ import torch.nn as nn
 from ..utils.ops import resize
 from .decode_head import BaseDecodeHead
 from .psp_head import PPM
-from ..conv_module.conv_module import ConvModule
+from ..conv_module import ConvModule
 
 
 class UPerHead(BaseDecodeHead):

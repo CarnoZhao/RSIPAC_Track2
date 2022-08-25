@@ -1,0 +1,13 @@
+model:
+  type: MMSegModel
+  backbone:
+    type: mmseg.PVT_b2
+    pretrained: ./weights/pvt_v2_b2.pth
+  decode_head:
+    type: SegformerHead
+    in_index: [0, 1, 2, 3]
+    channels: 256
+    dropout_ratio: 0.1
+    norm_cfg: {type: 'BN', requires_grad: True}
+    align_corners: False
+    num_classes: 1
