@@ -14,7 +14,7 @@ def build_trans(trans, T = A):
     trans = deepcopy(trans)
     if OmegaConf.is_list(trans):
         return T.Compose([build_trans(_, T = T) for _ in trans])
-    elif trans["type"] in ("OneOf", "SomeOf"):
+    elif trans["type"] in ("Compose", "OneOf", "SomeOf"):
         return getattr(T, trans.pop("type"))([build_trans(_, T = T) for _ in trans.pop("transforms")], **trans)
     elif trans["type"] == "ToTensorV2":
         trans.pop("type")

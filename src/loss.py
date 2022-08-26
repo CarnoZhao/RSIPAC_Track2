@@ -4,6 +4,7 @@ import torch.nn.functional as F
 from omegaconf import OmegaConf
 
 from .losses import losses as registry
+from collections import defaultdict
 
 class MultiLoss(nn.Module):
     def __init__(self, loss_cfg):

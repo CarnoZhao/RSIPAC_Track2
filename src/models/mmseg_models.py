@@ -30,7 +30,7 @@ class MMSegModel(nn.Module):
         backbone = backbone.copy()
         self.is_timm = False
         if "type" not in backbone or backbone["type"] == "timm":
-            self.prepare_backbone(backbone)
+            self.prepare_timm_backbone(backbone)
         elif backbone["type"].startswith("mmseg."):
             self.prepare_mmseg_backbone(backbone)
         else:
@@ -46,8 +46,9 @@ class MMSegModel(nn.Module):
     def prepare_timm_backbone(self, backbone):
         self.is_timm = True
         backbone = backbone.copy()
-        reductions = backbone.get("reductions", [4, 8, 16, 32])
-        self.backbone = timm.create_model(backbone.model_name, pretrained = True, features_only = True)
+        backbone.pop("type")
+        reductions = backbone.pop("reductions", [4, 8, 16, 32])
+        self.backbone = timm.create_model(backbone.pop("model_name"), features_only = True, **backbone)
         feature_info = self.backbone.feature_info.info
         feature_reductions = [_["reduction"] for _ in feature_info]
         self.reduction_index = [feature_reductions.index(r) for r in reductions]

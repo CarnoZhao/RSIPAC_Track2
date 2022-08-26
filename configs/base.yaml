@@ -1,26 +1,61 @@
+name: base
+version: f0
+fold: &fold 0
+
+
 model:
-  type: BaseModel
-  model_args1: null
-  model_args2: null
-  load_from: null
+  type: MMSegModel
+  backbone:
+    type: timm
+    model_name: resnet50
+    pretrained: True
+    in_chans: 6
+  decode_head:
+    type: UPerHead
+    pool_scales: [1, 2, 3, 6]
+    channels: 512
+    dropout_ratio: 0.1
+    num_classes: 1
+    norm_cfg: {type: BN, requires_grad: True}
+    align_corners: False
 
-loss: [
-  {type: BaseLoss1, loss_name: loss1, loss_weight: 1.0},
-  {type: BaseLoss2, loss_name: loss2, loss_weight: 1.0},
-]
+loss: [{
+  type: BCEWithIgnoreLoss, 
+  loss_name: bce_loss, 
+  ignore_index: 255, 
+  loss_weight: 1.0,
+}, {
+  type: DiceLoss, 
+  loss_name: dice_loss, 
+  loss_weight: 1.0, 
+}]
 
-metric: base_metric
+metric: 
+  type: DiceMetric
 
 data:
-  type: BaseData
+  type: ConcatData
   fold: 0
   num_folds: 5
   batch_size: 32
   stratified_by: null
   group_by: null
   dataset:
-    dataset_args1: null
-    dataset_args2: null
+    resize: &resize 512
+    trans: {
+      train: {type: Compose, transforms: [
+        {type: Resize, height: *resize, width: *resize},
+        {type: HorizontalFlip, p: 0.5},
+        {type: VerticalFlip, p: 0.5},
+        {type: Normalize},
+        {type: ToTensorV2},
+      ], additional_targets: {imageB: image}},
+      val: {type: Compose, transforms: [
+        {type: Resize, height: *resize, width: *resize},
+        {type: Normalize},
+        {type: ToTensorV2},
+      ], additional_targets: {imageB: image}}
+    }
 
 train:
   # optimizer
@@ -33,12 +68,9 @@ train:
   scheduler: one_cycle
 
   # trainer
-  monitor: valid_metric
+  monitor: val_dice
   log_step: 50
   val_interval: 1
   swa: False
-  grad_clip: 0
-
-name: base
-version: v0
-seed: 0
+  grad_clip: 2.0
+  strategy: dp
