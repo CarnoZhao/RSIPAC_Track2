@@ -66,6 +66,7 @@ def predict(row, models, img):
         preds = []
         for model in models:
             pred = model(img).sigmoid()
+            pred = pred.squeeze().detach().cpu().numpy()
             preds.append(pred)
         pred = sum(preds) / len(preds)
     return pred

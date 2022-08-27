@@ -34,7 +34,7 @@ def get_data(cfg):
         train_idx, valid_idx = list(split.split(df, groups = df[group_by]))[fold]
     elif "fold" in df.columns:
         train_idx = np.where(df.fold != fold)[0]
-        valid_idx = np.where(df.fold == fold)[0]
+        valid_idx = np.where(df.fold == (fold if fold != -1 else 0))[0]
     else:
         split = KFold(num_folds, shuffle = True, random_state = 0)
         train_idx, valid_idx = list(split.split(df))[fold]

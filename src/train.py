@@ -25,7 +25,7 @@ def get_trainer(args, cfg):
             dirpath = os.path.join("./logs", cfg.name, cfg.version),
             filename = '{epoch}_{' + monitor + ':.3f}',
             save_last = True,
-            save_top_k = 3,
+            save_top_k = cfg.train.get("save_topk", 3),
             save_weights_only = True,
             mode = "max",
             monitor = monitor),

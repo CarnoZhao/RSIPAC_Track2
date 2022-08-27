@@ -87,10 +87,11 @@ class MMSegModel(nn.Module):
 
     def extract_feat(self, img):
         out = self.backbone(img)
+        out = [out[i] for i in self.reduction_index]
         if self.with_neck:
             out = self.neck(out)
         if self.is_timm:
-            out = [getattr(self, f'norm{i}')(out[i]) for i in self.reduction_index]
+            out = [getattr(self, f'norm{i}')(out[i]) for i in range(len(self.reduction_index))]
         return out
 
     def forward(self, img):
