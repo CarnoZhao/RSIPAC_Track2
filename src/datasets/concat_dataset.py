@@ -10,6 +10,14 @@ from .base_dataset import BaseData
 from .builder import build_trans
 
 class ConcatData(BaseData):
+    def __init__(self, shuffle_ratio = 0.0, color_trans = None, **kwargs):
+        super().__init__(**kwargs)
+        if color_trans is not None:
+            self.color_trans = build_trans(color_trans.get(self.phase, None), color_trans.get("type", "A"))
+        else:
+            self.color_trans = None
+        self.shuffle_ratio = shuffle_ratio            
+
     @staticmethod
     def prepare(data_dir = "./data/train", **dataset_cfg):
         train_images_A = sorted(glob.glob(os.path.join(data_dir, "A/*")))
@@ -39,6 +47,14 @@ class ConcatData(BaseData):
         imgB = cv2.imread(image_file_B)
         imgA, imgB = [cv2.cvtColor(_, cv2.COLOR_BGR2RGB) for _ in (imgA, imgB)]
         mask = cv2.imread(mask_file, cv2.IMREAD_UNCHANGED)
+
+        if np.random.random() < self.shuffle_ratio and self.phase == "train":
+            imgA, imgB = imgB, imgA
+
+
+        if self.color_trans is not None:
+            imgA = self.color_trans(image = imgA)["image"]
+            imgB = self.color_trans(image = imgB)["image"]
 
         if self.trans is not None:
             aug = self.trans(image = imgA, imageB = imgB, mask = mask)

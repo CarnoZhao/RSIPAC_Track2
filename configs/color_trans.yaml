@@ -1,0 +1,90 @@
+name: cvs_768
+version: f4
+fold: &fold 4
+
+
+model:
+  type: MMSegModel
+  backbone:
+    type: timm
+    model_name: convnext_small
+    pretrained: True
+    in_chans: 6
+  decode_head:
+    type: UPerHead
+    pool_scales: [1, 2, 3, 6]
+    channels: 512
+    dropout_ratio: 0.1
+    num_classes: 1
+    norm_cfg: {type: BN, requires_grad: True}
+    align_corners: False
+
+loss: [{
+  type: BCEWithIgnoreLoss, 
+  loss_name: bce_loss, 
+  ignore_index: 255, 
+  loss_weight: 1.0,
+}, {
+  type: DiceLoss, 
+  loss_name: dice_loss, 
+  loss_weight: 1.0, 
+}]
+
+metric: 
+  type: DiceMetric
+
+data:
+  type: ConcatData
+  fold: *fold
+  num_folds: 5
+  batch_size: 16
+  stratified_by: null
+  group_by: null
+  dataset:
+    resize: &resize 768
+    color_trans: {
+      train: [
+        {type: ColorJitter, p: 0.5},
+        {type: GaussNoise, p: 0.5},
+      ]
+    }
+    trans: {
+      train: {type: Compose, transforms: [
+        {type: Resize, height: *resize, width: *resize},
+        {type: HorizontalFlip, p: 0.5},
+        {type: VerticalFlip, p: 0.5},
+        {type: RandomRotate90, p: 0.5},
+        {type: ShiftScaleRotate, rotate_limit: 45, border_mode: 0, value: 0, mask_value: 0, p: 0.5},
+        {type: OneOf, transforms: [
+          {type: ElasticTransform, p: 0.5},
+          {type: GridDistortion, p: 0.5},
+          {type: OpticalDistortion, p: 0.5},
+        ], p: 1.0},
+        {type: Normalize},
+        {type: ToTensorV2},
+      ], additional_targets: {imageB: image}},
+      val: {type: Compose, transforms: [
+        {type: Resize, height: *resize, width: *resize},
+        {type: Normalize},
+        {type: ToTensorV2},
+      ], additional_targets: {imageB: image}}
+    }
+
+train:
+  # optimizer
+  optimizer: adam
+  learning_rate: 1e-3
+  weight_decay: 2e-5
+
+  # scheduler
+  num_epochs: 20
+  scheduler: one_cycle
+
+  # trainer
+  monitor: val_dice
+  log_step: 50
+  val_interval: 1
+  swa: True
+  grad_clip: 2.0
+  strategy: dp
+  save_topk: 1
