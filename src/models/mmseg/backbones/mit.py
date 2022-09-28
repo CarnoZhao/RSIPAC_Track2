@@ -13,6 +13,8 @@ from ..blocks.embed import PatchEmbed
 
 from ..utils.misc import nchw_to_nlc, nlc_to_nchw
 
+from timm.models.helpers import adapt_input_conv
+
 class MixFFN(nn.Module):
     """An implementation of MixFFN of Segformer.
 
@@ -342,7 +344,7 @@ class MixVisionTransformer(nn.Module):
                  pretrained=None,
                  with_cp=False):
         super(MixVisionTransformer, self).__init__()
-
+        self.in_channels = in_channels
         self.embed_dims = embed_dims
         self.num_stages = num_stages
         self.num_layers = num_layers
@@ -395,6 +397,9 @@ class MixVisionTransformer(nn.Module):
             cur += num_layer
             self.out_channels.append(embed_dims_i)
 
+        if pretrained:
+            self.load_pretrained(pretrained)
+
     def init_weights(self):
         for m in self.modules():
             if isinstance(m, nn.Linear):
@@ -421,3 +426,9 @@ class MixVisionTransformer(nn.Module):
                 outs.append(x)
 
         return outs
+
+    def load_pretrained(self, pretrained):
+        stt = torch.load(pretrained, map_location = "cpu")
+        weight_name = "layers.0.0.projection.weight"
+        stt[weight_name] = adapt_input_conv(self.in_channels, stt[weight_name])
+        self.load_state_dict(stt, strict = False)

@@ -1,23 +1,32 @@
-name: cvb_l1aug_640
-version: f2
-fold: &fold 2
+name: siamese_effb4da_l1aug
+version: f0
+fold: &fold 0
+seed: 0
 
-
+norm_cfg: &norm_cfg {type: BN, requires_grad: True}
 model:
-  type: MMSegModel
+  type: MMSegSiamese
   backbone:
     type: timm
-    model_name: convnext_base_384_in22ft1k
+    in_chans: 3
+    model_name: tf_efficientnet_b4_ns
     pretrained: True
-    in_chans: 6
   decode_head:
-    type: UPerHead
-    pool_scales: [1, 2, 3, 6]
-    channels: 512
+    type: DAFormerHead
+    channels: 256
     dropout_ratio: 0.1
     num_classes: 1
-    norm_cfg: {type: BN, requires_grad: True}
+    norm_cfg: *norm_cfg
     align_corners: False
+    decoder_params:
+      embed_dims: 256
+      embed_cfg: {type: mlp, act_cfg: null, norm_cfg: null}
+      embed_neck_cfg: {type: mlp, act_cfg: null, norm_cfg: null}
+      fusion_cfg: 
+        type: conv
+        kernel_size: 3
+        act_cfg: {type: ReLU}
+        norm_cfg: *norm_cfg
 
 loss: [
   {
@@ -35,13 +44,13 @@ loss: [
 
 metric: 
   type: ChangeAP
-  thres_list: [0.1, 0.2, 0.3]
+  thres_list: [0.2, 0.3, 0.4]
 
 data:
-  type: ConcatData
+  type: SiameseData
   fold: *fold
   num_folds: 5
-  batch_size: 16
+  batch_size: 32
   stratified_by: null
   group_by: null
   dataset:
@@ -83,7 +92,7 @@ train:
   # trainer
   monitor: val_ap
   log_step: 50
-  val_interval: 1
+  val_interval: 5
   swa: True
   grad_clip: 2.0
   strategy: dp

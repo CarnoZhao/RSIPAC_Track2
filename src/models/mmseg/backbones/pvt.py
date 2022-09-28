@@ -4,6 +4,7 @@ import torch.nn.functional as F
 from functools import partial
 
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
+from timm.models.helpers import adapt_input_conv
 import math
 
 
@@ -235,6 +236,7 @@ class PyramidVisionTransformerV2_(nn.Module):
         self.num_classes = num_classes
         self.depths = depths
         self.num_stages = num_stages
+        self.in_chans = in_chans
 
         dpr = [x.item() for x in torch.linspace(0, drop_path_rate, sum(depths))]  # stochastic depth decay rule
         cur = 0
@@ -361,4 +363,6 @@ class PyramidVisionTransformerV2(PyramidVisionTransformerV2_):
 
     def load_pretrained(self, pretrained):
         stt = torch.load(pretrained, map_location = "cpu")
+        weight_name = "patch_embed1.proj.weight"
+        stt[weight_name] = adapt_input_conv(self.in_chans, stt[weight_name])
         self.load_state_dict(stt, strict = False)

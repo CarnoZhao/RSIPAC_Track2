@@ -1,23 +1,36 @@
-name: cvb_l1aug_640
-version: f2
-fold: &fold 2
-
+name: sgf2_l1aug
+version: f4
+fold: &fold 4
 
 model:
   type: MMSegModel
   backbone:
-    type: timm
-    model_name: convnext_base_384_in22ft1k
-    pretrained: True
-    in_chans: 6
+    type: mmseg.MixVisionTransformer
+    in_channels: 6
+    embed_dims: 64
+    num_stages: 4
+    num_layers: [3, 4, 6, 3] # b2
+    # num_layers: [3, 8, 27, 3] # b4
+    num_heads: [1, 2, 5, 8]
+    patch_sizes: [7, 3, 3, 3]
+    sr_ratios: [8, 4, 2, 1]
+    out_indices: [0, 1, 2, 3]
+    with_cp: False
+    mlp_ratio: 4
+    qkv_bias: True
+    drop_rate: 0.0
+    attn_drop_rate: 0.0
+    drop_path_rate: 0.1
+    pretrained: ./weights/mit_b2_mmseg.pth
   decode_head:
-    type: UPerHead
-    pool_scales: [1, 2, 3, 6]
-    channels: 512
+    type: SegformerHead
+    in_channels: [64, 128, 320, 512]
+    in_index: [0, 1, 2, 3]
+    channels: 256
     dropout_ratio: 0.1
-    num_classes: 1
-    norm_cfg: {type: BN, requires_grad: True}
+    norm_cfg: {type: 'BN', requires_grad: True}
     align_corners: False
+    num_classes: 1
 
 loss: [
   {
@@ -41,12 +54,13 @@ data:
   type: ConcatData
   fold: *fold
   num_folds: 5
-  batch_size: 16
+  batch_size: 32
   stratified_by: null
   group_by: null
   dataset:
     resize: &resize 512
-    trans: {
+    shuffle_ratio: 0.0
+    trans: { 
       train: {type: Compose, transforms: [
         {type: Resize, height: *resize, width: *resize},
         {type: HorizontalFlip, p: 0.5},
