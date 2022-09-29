@@ -10,6 +10,7 @@ from .datasets import datasets as registry
 def get_data(cfg):
     data_type = cfg.type 
     fold = cfg.get("fold", 0)
+    num_workers = cfg.get("num_workers", 16)
     num_folds = cfg.get("num_folds", 5)
     batch_size = cfg.get("batch_size", 32) 
     stratified_by = cfg.get("stratified_by", None) 
@@ -58,16 +59,21 @@ def get_data(cfg):
 
     sampler = torchsampler.ImbalancedDatasetSampler(ds_train) if ds_train.balance_key else None
 
-    def dl_train(shuffle = True, drop_last = True, num_workers = 8, sampler = sampler):
+    def dl_train(shuffle = True, drop_last = True, num_workers = num_workers, sampler = sampler):
         sampler = {"sampler": sampler} if sampler else {"shuffle": shuffle}
         return DataLoader(ds_train, 
                         batch_size, 
                         drop_last = drop_last, 
                         num_workers = num_workers,
+                        pin_memory = True,
 		                worker_init_fn = lambda id: np.random.seed(torch.initial_seed() // 2 ** 32 + id), 
                         **sampler)
 
-    def dl_valid(shuffle = False, num_workers = 8):
-        return DataLoader(ds_valid, batch_size, shuffle = shuffle, num_workers = num_workers)
+    def dl_valid(shuffle = False, num_workers = num_workers):
+        return DataLoader(ds_valid, 
+                        batch_size, 
+                        shuffle = shuffle, 
+                        num_workers = num_workers,
+                        pin_memory = True,)
 
     return (ds_train, ds_valid), (dl_train, dl_valid)
