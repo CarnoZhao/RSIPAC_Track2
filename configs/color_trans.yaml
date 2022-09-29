@@ -49,7 +49,7 @@ data:
       ]
     }
     trans: {
-      train: {type: Compose, transforms: [
+      train: [
         {type: Resize, height: *resize, width: *resize},
         {type: HorizontalFlip, p: 0.5},
         {type: VerticalFlip, p: 0.5},
@@ -62,12 +62,15 @@ data:
         ], p: 1.0},
         {type: Normalize},
         {type: ToTensorV2},
-      ], additional_targets: {imageB: image}},
-      val: {type: Compose, transforms: [
+      ],
+      val: [
         {type: Resize, height: *resize, width: *resize},
         {type: Normalize},
         {type: ToTensorV2},
-      ], additional_targets: {imageB: image}}
+      ],
+      trans_args: {
+        additional_targets: {imageB: image}
+      }
     }
 
 train:
