@@ -3,9 +3,10 @@ import pytorch_lightning as pl
 from pytorch_lightning.loggers import CSVLogger
 from pytorch_lightning.callbacks import ModelCheckpoint, RichProgressBar, StochasticWeightAveraging, LearningRateMonitor
 import torch
-torch.backends.cudnn.enabled = False
+torch.backends.cudnn.enabled = True
+torch.backends.cudnn.benchmark = True
 import cv2
-cv2.setNumThreads(4)
+# cv2.setNumThreads(4)
 
 def get_trainer(args, cfg):
 
