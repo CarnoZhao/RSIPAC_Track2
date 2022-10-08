@@ -1,7 +1,6 @@
-name: sia_pv2d_mos
-version: f0
-fold: &fold 0
-seed: 0
+name: sia_pv2d_mos_v2
+version: f4
+fold: &fold 4
 
 norm_cfg: &norm_cfg {type: BN, requires_grad: True}
 model:
@@ -50,6 +49,7 @@ data:
   type: SiameseData
   fold: *fold
   num_folds: 5
+  num_workers: 16
   batch_size: 24
   stratified_by: null
   group_by: null
@@ -62,12 +62,12 @@ data:
         {type: VerticalFlip, p: 0.5},
         {type: RandomRotate90, p: 0.5},
         # {type: ShiftScaleRotate, rotate_limit: 45, border_mode: 0, value: 0, mask_value: 0, p: 0.5},
+        {type: Mosaic, p: 0.5},
         {type: OneOf, transforms: [
           {type: ElasticTransform, p: 0.5},
           {type: GridDistortion, p: 0.5},
           # {type: OpticalDistortion, p: 0.5},
         ], p: 1.0},
-        {type: Mosaic, p: 0.5},
         {type: ColorJitter, p: 0.5},
         {type: GaussNoise, p: 0.5},
         {type: Normalize},

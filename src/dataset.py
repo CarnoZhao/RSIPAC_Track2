@@ -66,6 +66,7 @@ def get_data(cfg):
                         drop_last = drop_last, 
                         num_workers = num_workers,
                         pin_memory = True,
+                        worker_init_fn = lambda id: np.random.seed(torch.initial_seed() // 2 ** 32 + id),
                         **sampler)
 
     def dl_valid(shuffle = False, num_workers = num_workers):

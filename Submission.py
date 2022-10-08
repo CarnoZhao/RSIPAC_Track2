@@ -22,7 +22,6 @@ import torch.nn.functional as F
 
 from omegaconf import OmegaConf
 
-os.chdir("/home/zhaoxun/codes/Rsipac/")
 from src.models import models as Registry
 
 data_dir = "./data/test"
@@ -111,7 +110,7 @@ def predict(row, models, img):
     return pred
 
 
-def get_dt(row, pred, img_id, dts, thres, thres2 = None):
+def get_dt(row, pred, img_id, dts, thres):
     mask = (pred > thres).astype(np.uint8)
     nc, label = cv2.connectedComponents(mask, connectivity = 8)
     for c in range(nc):
@@ -134,15 +133,11 @@ def get_dt(row, pred, img_id, dts, thres, thres2 = None):
 
 siamese = True
 names = [
-    # ["cvb_l1aug", 1.0, None],
-    # ["siamese_pv1d_l1aug", 1.0, None],
-    ["sia_pv2d_coltran", 1.0, None],
-    # ["sgf2_l1aug", 1.0, None]
+    ["sia_pv2d", 1.0, None],
 ]
 tta = [[2], [3], [2,3]]
 last_or_best = ["epoch*", "last"][0]
 thres = 0.2
-stepwise_thres = None
 folds = list(range(5))
 
 
