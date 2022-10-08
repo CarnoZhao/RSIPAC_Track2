@@ -1,5 +1,5 @@
-from .base_dataset import BaseData
+from .seg_dataset import SegData
 
-datasets = {
-    "BaseData": BaseData,
-}
+datasets = {_.__name__: _ for _ in [
+    SegData,
+]}

@@ -1,6 +1,9 @@
 logs
+results
 *.zip
-weights
+*.pth
+*.ckpt
+*weights
 nohup.out
 *.ipynb
 # Byte-compiled / optimized / DLL files
